@@ -1,0 +1,17 @@
+certifi
+chardet
+click
+Flask
+flask-cors
+humanize
+idna
+itsdangerous
+Jinja2
+MarkupSafe
+pony
+python-terraform
+redis
+requests
+tqdm
+urllib3
+Werkzeug

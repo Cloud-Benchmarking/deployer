@@ -1,0 +1,315 @@
+<html>
+<title>PyTerra Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+        integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+    /*
+    body {
+        background: #222;
+        color: #EEE;
+    }
+
+    .card {
+        background-color: #333;
+        color: #EEE;
+    }
+
+    .progress {
+        background-color: #333;
+    }
+*/
+    .linode {
+        background-color: #02b159;
+    }
+
+    .gcp {
+        background-color: #1a73e8
+    }
+
+    .aws {
+        background-color: #d13212
+    }
+
+    .azure {
+        background-color: #ffb900
+    }
+
+    .digitalocean {
+        background-color: #0069ff
+    }
+
+    .vultr {
+        background-color: #0069ff
+    }
+
+    .all {
+        background-color: #ff00b4
+    }
+
+    .progressbars li {
+        list-style-type: none;
+        margin: 5px;
+    }
+</style>
+</html>
+<body>
+
+<div id="app">
+    <h2>Providers</h2>
+    <ul class="progressbars">
+        <li>
+            <div class="progress">
+                <div class="progress-bar progress-bar-animated" role="progressbar" :style="allStyleObject"
+                     aria-valuenow="15"
+                     aria-valuemin="0" aria-valuemax="100">Backlog [[ backlog_list.length ]] / [[ total_count ]]
+                </div>
+                <div class="progress-bar progress-bar-animated bg-info" role="progressbar" :style="workingStyleObject"
+                     aria-valuenow="20"
+                     aria-valuemin="0" aria-valuemax="100">In-Progress [[ working_list.length ]] / [[ total_count ]]
+                </div>
+                <div class="progress-bar progress-bar-animated bg-success" role="progressbar" :style="finishedStyleObject"
+                     aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">Finished [[ finished_list.length ]] / [[ total_count ]]
+                </div>
+            </div>
+        </li>
+
+        {%- for provider in providers %}
+            <li>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-animated {{ provider }}" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </li>
+        {%- endfor %}
+    </ul>
+
+    <div class="row">
+        {%- for provider in providers|sort %}
+            <div class="col">
+                <div class="card">
+                    <div class="card-body" style="position: relative;">
+                        <h4 class="header-title">{{ provider }}</h4>
+                        <div id="{{ provider }}-chart" class="apex-charts"></div>
+                        <div class="resize-triggers">
+                            <div class="expand-trigger">
+                                <div style="width: 736px; height: 453px;"></div>
+                            </div>
+                            <div class="contract-trigger"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {%- endfor %}
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary" style="width: 100%" data-bs-toggle="collapse" href="#multiCollapseExample1" role="button"
+                    aria-expanded="true"
+                    aria-controls="multiCollapseExample1">[[ backlog_list.length ]] remaining
+            </button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary" style="width: 100%" type="button" data-bs-toggle="collapse" data-bs-target="#multiCollapseExample2"
+                    aria-expanded="true"
+                    aria-controls="multiCollapseExample2">[[ working_list.length ]] in-progress
+            </button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary" style="width: 100%" type="button" data-bs-toggle="collapse" data-bs-target="#multiCollapseExample3"
+                    aria-expanded="true"
+                    aria-controls="multiCollapseExample3">[[ finished_list.length ]] done
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="collapse multi-collapse" id="multiCollapseExample1">
+                <div class="card card-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">Combo</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="item in backlog_list">
+                            <td scope="row">[[item]]</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="collapse multi-collapse" id="multiCollapseExample2">
+                <div class="card card-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">Combo</th>
+                            <th scope="col">Start</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="item in working_list">
+                            <td scope="row">[[item.combo]]</td>
+                            <td>[[moment(item.start_dtm).fromNow()]]</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="collapse multi-collapse" id="multiCollapseExample3">
+                <div class="card card-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">Combo</th>
+                            <th scope="col">Start</th>
+                            <th scope="col">End</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr v-for="item in finished_list">
+                            <td scope="row">[[item.combo]]</td>
+                            <td>[[moment(item.start_dtm).fromNow()]]</td>
+                            <td>[[moment(item.end_dtm).fromNow()]]</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let styleColors = {
+        'linode': '#02b159',
+        'gcp': '#1a73e8',
+        'aws': '#d13212',
+        'azure': '#ffb900',
+        'digitalocean': '#0069ff',
+        'vultr': '#0069ff',
+        'all': '#ff00b4'
+    };
+
+    {#let data = {{ data }}#}
+    var app = new Vue({
+        el: '#app',
+        data: {
+            workingStyleObject: {},
+            finishedStyleObject: {},
+            allStyleObject: {},
+            total_count: 0,
+            working_count: 0,
+            backlog_count: 0,
+            finished_count: 0,
+            working_list: [],
+            finished_list: [],
+            backlog_list: []
+        },
+        delimiters: ['[[', ']]'],
+        methods: {
+            moment: function (date) {
+                return moment(date);
+            }
+        }
+    })
+
+    function updateApp(data) {
+        app.working_list = data['working'];
+        app.finished_list = data['finished'];
+        app.backlog_list = data['all'];
+        app.total_count = (data['all'].length + data['working'].length + data['finished'].length);
+        app.workingStyleObject = {
+            width: (100 * data['working'].length) / app.total_count + "%"
+        }
+        app.finishedStyleObject = {
+            width: (100 * data['finished'].length) / app.total_count + "%"
+        }
+        app.allStyleObject = {
+            width: (100 * data['all'].length) / app.total_count + "%"
+        }
+    }
+
+    let charts = {};
+    var options = {
+        tooltip: {
+            {#theme: 'dark'#}
+        },
+        series: [{
+            data: []
+        }],
+        chart: {
+            type: 'bar',
+            height: 350, dropShadow: {
+                enabled: true,
+                top: 0,
+                left: 0,
+                blur: 2,
+                opacity: 0.25
+            },
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+            }
+        },
+        dataLabels: {
+            enabled: false,
+        }
+    };
+
+    {%- for provider in providers %}
+        charts["{{ provider }}"] = new ApexCharts(document.querySelector("#{{provider}}-chart"), options);
+        charts["{{ provider }}"].render();
+    {%- endfor %}
+
+    function updateDashboardData() {
+    fetch('/data2')
+        .then(function (response) {
+            return response.json();
+        })
+        .then(json => {
+            updateApp(json);
+
+            for (const [provider, limits] of Object.entries(json.provider_usage_limits)) {
+                let pbar = document.querySelector(".progress-bar." + provider);
+                pbar.innerHTML = provider + ": " + limits.current + " / " + limits.limit;
+                pbar.style = "width: " + ((100*limits.current)/limits.limit) + "%";
+            }
+
+            for (const [provider, regions] of Object.entries(json.provider_regions)) {
+                let updated_data = [];
+                Object.keys(regions).forEach(function (region) {
+                    updated_data.push(json[provider + ":" + region]);
+                })
+                charts[provider].updateOptions({
+                    series: [{
+                        data: updated_data
+                    }],
+                    name: provider,
+                    xaxis: {
+                        categories: Object.keys(regions),
+                    },
+                    colors: [styleColors[provider]]
+                });
+            }
+        });
+    }
+
+    setInterval(function(){
+        console.log("setInterval");
+        updateDashboardData();
+    }, 2000);
+</script>
+</body>
